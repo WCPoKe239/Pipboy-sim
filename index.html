@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07130b">
+<title>PIP-BOY 3000 // Personal Interface</title>
+<style>
+:root{--bg:#07130b;--panel:#0b1c10;--green:#8cff9b;--dim:#4d9b5b;--faint:#234b2d;--amber:#e4b85d;--red:#e36b5d}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#020804;color:var(--green);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);display:flex;justify-content:center}
+.shell{width:min(100%,760px);min-height:100svh;background:radial-gradient(ellipse at center,#102719 0%,#07130b 72%);border:1px solid #285b34;position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 35px #173d23}
+.shell:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,#0000 0px,#0000 3px,#0003 4px);opacity:.38;z-index:5}
+header{padding:13px 16px 9px;border-bottom:1px solid var(--dim);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.brand{font-size:clamp(18px,4vw,25px);font-weight:900;letter-spacing:2px;text-shadow:0 0 9px #6aff83}.subtitle{font-size:9px;color:var(--dim);letter-spacing:1.5px;margin-top:3px}
+.clock{text-align:right;font-size:clamp(17px,4vw,22px);font-weight:bold;white-space:nowrap}.date{font-size:10px;color:var(--dim);margin-top:3px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--dim);background:#08170d}
+.tab{border:0;background:transparent;color:var(--dim);padding:12px 4px 10px;font:700 12px inherit;letter-spacing:1px;border-bottom:3px solid transparent}
+.tab.active{color:var(--green);border-color:var(--green);text-shadow:0 0 8px #5bff7b}
+main{padding:14px;flex:1;position:relative;z-index:1}
+.panel{display:none}.panel.active{display:block}
+.section-title{font-size:12px;letter-spacing:2px;border-bottom:1px solid var(--dim);padding-bottom:7px;margin:0 0 12px;color:#b2ffb9}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:#0a1a0eaa;border:1px solid var(--faint);padding:10px;min-width:0}
+.card h3{font-size:10px;letter-spacing:1.5px;color:var(--dim);margin:0 0 9px;font-weight:700}
+.big{font-size:25px;font-weight:900;text-shadow:0 0 8px #63ff80}.unit{font-size:10px;color:var(--dim);margin-left:4px}
+.bar{height:8px;background:#183521;border:1px solid #2e6a3b;margin-top:8px;overflow:hidden}.fill{height:100%;background:var(--green);box-shadow:0 0 8px #66ff85;width:70%;transition:width .2s}
+.statline{display:flex;justify-content:space-between;font-size:11px;margin:8px 0 4px;gap:8px}.muted{color:var(--dim)}
+.actionrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button.action{background:#102719;border:1px solid var(--dim);color:var(--green);padding:9px 11px;font:700 11px ui-monospace,monospace;letter-spacing:.5px}
+button.action:active,.tab:active{background:#21482b}
+button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.full{grid-column:1/-1}
+.stat-controls{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;margin:10px 0}
+input[type=range]{width:100%;accent-color:var(--green)}
+.item{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed #285334;padding:11px 2px;font-size:12px;gap:8px}
+.item small{display:block;color:var(--dim);font-size:10px;margin-top:3px}
+.pill{border:1px solid var(--dim);padding:3px 7px;font-size:10px;color:#c4ffca;white-space:nowrap}
+.quest{border-left:3px solid var(--green);padding:8px 10px;background:#0b1e10;margin:8px 0;font-size:12px}
+.quest.done{opacity:.55;border-color:var(--dim);text-decoration:line-through}
+.map{height:280px;border:1px solid var(--dim);position:relative;overflow:hidden;background-color:#08170d;background-image:linear-gradient(#28533455 1px,transparent 1px),linear-gradient(90deg,#28533455 1px,transparent 1px);background-size:24px 24px}
+.map:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 52% 52%,#163c20aa,transparent 70%)}
+.marker{position:absolute;color:var(--amber);font-size:11px;text-shadow:0 0 7px #e4b85d}.you{color:var(--green);font-size:19px}
+.maplabel{position:absolute;bottom:8px;left:9px;font-size:9px;color:var(--dim);letter-spacing:1px}
+footer{border-top:1px solid var(--dim);padding:9px 14px;display:flex;justify-content:space-between;font-size:9px;color:var(--dim);letter-spacing:1px;position:relative;z-index:6}
+.notice{font-size:10px;color:var(--amber);margin-top:10px;line-height:1.5}
+@media (orientation:landscape) and (max-height:520px){.shell{width:100%;min-height:100svh}.brand{font-size:18px}header{padding:7px 14px}.tabs .tab{padding:7px}main{padding:9px}.map{height:190px}.grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+ <div><div class="brand">PIP-BOY <span style="color:var(--amber)">3000</span></div><div class="subtitle">PERSONAL INFORMATION PROCESSOR</div></div>
+ <div><div class="clock" id="clock">--:--:--</div><div class="date" id="date">LOADING DATE</div></div>
+</header>
+<nav class="tabs" aria-label="Pip-Boy sections">
+ <button class="tab active" data-tab="stat">STAT</button><button class="tab" data-tab="inv">INV</button><button class="tab" data-tab="data">DATA</button><button class="tab" data-tab="map">MAP</button>
+</nav>
+<main>
+<section class="panel active" id="stat">
+ <h2 class="section-title">STATUS // VITALS</h2>
+ <div class="grid">
+  <div class="card"><h3>HEALTH POINTS</h3><div><span class="big" id="hpNum">85</span><span class="unit">/ 100 HP</span></div><div class="bar"><div class="fill" id="hpBar"></div></div><div class="statline"><span class="muted">CONDITION</span><span id="hpState">STABLE</span></div></div>
+  <div class="card"><h3>ACTION POINTS</h3><div><span class="big" id="apNum">72</span><span class="unit">/ 100 AP</span></div><div class="bar"><div class="fill" id="apBar"></div></div><div class="statline"><span class="muted">ENERGY</span><span id="apState">READY</span></div></div>
+  <div class="card"><h3>RADIATION</h3><div><span class="big" id="radNum">12</span><span class="unit">RAD</span></div><div class="bar"><div class="fill" id="radBar" style="background:var(--amber);box-shadow:0 0 8px var(--amber)"></div></div><div class="statline"><span class="muted">EXPOSURE</span><span id="radState">LOW</span></div></div>
+  <div class="card"><h3>EXPERIENCE</h3><div><span class="big" id="xpNum">640</span><span class="unit">XP</span></div><div class="bar"><div class="fill" id="xpBar"></div></div><div class="statline"><span class="muted">NEXT LEVEL</span><span id="xpNext">LEVEL 5</span></div></div>
+  <div class="card full"><h3>CHARACTER // S.P.E.C.I.A.L.</h3>
+   <div class="statline"><span>STRENGTH</span><b>5</b><span>PERCEPTION</span><b>6</b><span>ENDURANCE</span><b>7</b></div>
+   <div class="statline"><span>CHARISMA</span><b>4</b><span>INTELLIGENCE</span><b>8</b><span>AGILITY</span><b>6</b></div>
+   <div class="statline"><span>LUCK</span><b>5</b><span class="muted">LEVEL</span><b id="level">4</b><span class="muted">CAPS</span><b id="caps">125</b></div>
+  </div>
+ </div>
+ <div class="actionrow"><button class="action" onclick="change('hp',10)">+10 HP</button><button class="action" onclick="change('hp',-10)">-10 HP</button><button class="action" onclick="change('ap',10)">+10 AP</button><button class="action" onclick="change('rad',5)">+5 RAD</button><button class="action" onclick="change('rad',-5)">-5 RAD</button></div>
+ <p class="notice">SIMULATION ONLY // These are fictional game-style values, not medical or fitness measurements.</p>
+</section>
+<section class="panel" id="inv">
+ <h2 class="section-title">INVENTORY // CARRYING</h2>
+ <div class="item"><div>Stimpak<small>Restores simulated HP</small></div><span class="pill" id="stims">x 3</span><button class="action" onclick="useItem('stim')">USE</button></div>
+ <div class="item"><div>RadAway<small>Reduces simulated RAD</small></div><span class="pill" id="radaways">x 2</span><button class="action" onclick="useItem('radaway')">USE</button></div>
+ <div class="item"><div>Nuka-Cola<small>Restores simulated AP</small></div><span class="pill" id="colas">x 4</span><button class="action" onclick="useItem('cola')">USE</button></div>
+ <div class="item"><div>Fusion Cell<small>Energy ammunition</small></div><span class="pill">x 24</span></div>
+ <div class="item"><div>Vault-Tec Lunchbox<small>Miscellaneous</small></div><span class="pill">x 1</span></div>
+ <div class="item"><div>Bottle Caps<small>Currency</small></div><span class="pill" id="capsInv">125 caps</span></div>
+ <p class="notice" id="invMsg">Select USE to consume an item in this simulation.</p>
+</section>
+<section class="panel" id="data">
+ <h2 class="section-title">DATA // QUEST LOG</h2>
+ <div class="quest"><b>MAIN: A NEW BEGINNING</b><br><span class="muted">Explore the area surrounding your vault.</span></div>
+ <div class="quest"><b>WASTELAND SURVEY</b><br><span class="muted">Record three locations on your map.</span></div>
+ <div class="quest"><b>SCAVENGER'S ROUTE</b><br><span class="muted">Collect useful supplies for your journey.</span></div>
+ <div class="quest done"><b>VAULT ORIENTATION</b><br><span class="muted">Review your Pip-Boy interface.</span></div>
+ <div class="card" style="margin-top:14px"><h3>PERSONAL LOG</h3><textarea id="log" rows="4" maxlength="500" placeholder="Enter a wasteland journal entry..." style="width:100%;resize:vertical;background:#061109;color:var(--green);border:1px solid var(--dim);padding:9px;font:12px ui-monospace,monospace"></textarea><div class="actionrow"><button class="action" onclick="saveLog()">SAVE ENTRY</button><span class="muted" id="saved">LOCAL SAVE</span></div></div>
+</section>
+<section class="panel" id="map">
+ <h2 class="section-title">LOCAL MAP // SIMULATED</h2>
+ <div class="map"><span class="marker you" style="left:48%;top:46%">⌖</span><span class="marker" style="left:17%;top:20%">◆ VAULT 111</span><span class="marker" style="left:63%;top:27%">◆ RED ROCKET</span><span class="marker" style="left:65%;top:72%">◆ SETTLEMENT</span><span class="marker" style="left:12%;top:76%">◆ RADIO TOWER</span><span class="maplabel">COMMONWEALTH // NOT A REAL GPS MAP</span></div>
+ <p class="notice">Map markers are decorative game references. This page does not access your location or provide navigation.</p>
+</section>
+</main>
+<footer><span>VAULT-TEC INDUSTRIES</span><span id="system">SYSTEM ONLINE</span><span>V. 1.0.0</span></footer>
+</div>
+<script>
+const defaults={hp:85,ap:72,rad:12,xp:640,level:4,caps:125,stims:3,radaways:2,colas:4,log:""};
+let s={...defaults};
+try{const saved=JSON.parse(localStorage.getItem("pipboy3000"));if(saved)s={...s,...saved}}catch(e){}
+const $=id=>document.getElementById(id);
+function clamp(n,min,max){return Math.max(min,Math.min(max,n))}
+function render(){
+ ["hp","ap","rad"].forEach(k=>{$(k+"Num").textContent=s[k];$(k+"Bar").style.width=(k==="rad"?clamp(s.rad,0,100):clamp(s[k],0,100))+"%"});
+ $("hpState").textContent=s.hp>65?"STABLE":s.hp>30?"WOUNDED":"CRITICAL";
+ $("apState").textContent=s.ap>50?"READY":s.ap>20?"LOW":"DEPLETED";
+ $("radState").textContent=s.rad<25?"LOW":s.rad<60?"ELEVATED":"DANGER";
+ $("xpNum").textContent=s.xp;$("xpBar").style.width=(s.xp%2000)/20+"%";$("xpNext").textContent="LEVEL "+(s.level+1);
+ $("level").textContent=s.level;$("caps").textContent=s.caps;$("capsInv").textContent=s.caps+" caps";
+ $("stims").textContent="x "+s.stims;$("radaways").textContent="x "+s.radaways;$("colas").textContent="x "+s.colas;
+ $("log").value=s.log||"";
+ try{localStorage.setItem("pipboy3000",JSON.stringify(s))}catch(e){}
+}
+function change(k,n){s[k]=clamp(s[k]+n,0,k==="rad"?100:100);render()}
+function useItem(item){
+ let msg="";
+ if(item==="stim"&&s.stims>0){s.stims--;s.hp=clamp(s.hp+30,0,100);msg="STIMPAK USED // +30 HP"}
+ else if(item==="radaway"&&s.radaways>0){s.radaways--;s.rad=clamp(s.rad-25,0,100);msg="RADAWAY USED // -25 RAD"}
+ else if(item==="cola"&&s.colas>0){s.colas--;s.ap=clamp(s.ap+25,0,100);msg="NUKA-COLA USED // +25 AP"}
+ else msg="ITEM UNAVAILABLE";
+ $("invMsg").textContent=msg;render();
+}
+function saveLog(){s.log=$("log").value;$("saved").textContent="ENTRY SAVED";render()}
+function tick(){
+ const d=new Date();
+ $("clock").textContent=d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+ $("date").textContent=d.toLocaleDateString([],{weekday:"short",month:"short",day:"2-digit",year:"numeric"}).toUpperCase();
+}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id===b.dataset.tab))}));
+tick();setInterval(tick,1000);render();
+</script>
+</body></html>
